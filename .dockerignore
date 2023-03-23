@@ -3,5 +3,6 @@
 !examples/multi_backends/*.py
 !examples/wiki_parser/*.py
 !examples/caching/*.py
+!examples/tuning/*.py
 !bin
 !pirlib

@@ -1,0 +1,232 @@
+graphs:
+- id: ml_job
+  nodes:
+  - id: preprocess
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.tuning.ml_pipeline:preprocess
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: data_dir
+      iotype: DIRECTORY
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: raw_data
+      meta:
+        name: data_dir
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: preproc_hp
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: preprocess
+      annotations: null
+  - id: feature_engineer
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.tuning.ml_pipeline:feature_engineer
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: data_dir
+      iotype: DIRECTORY
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: raw_data
+      meta:
+        name: data_dir
+        annotations: null
+    - id: preprocess_dir
+      iotype: DIRECTORY
+      source:
+        node_id: preprocess
+        subgraph_id: null
+        output_id: return
+        graph_input_id: null
+      meta:
+        name: preprocess_dir
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: fe_hp
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: feature_engineer
+      annotations: null
+  - id: base_model_training
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.tuning.ml_pipeline:base_model_training
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: engineered_data
+      iotype: DIRECTORY
+      source:
+        node_id: feature_engineer
+        subgraph_id: null
+        output_id: return
+        graph_input_id: null
+      meta:
+        name: engineered_data
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: base_model_hp
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: base_model_training
+      annotations: null
+  - id: meta_model_training
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.tuning.ml_pipeline:meta_model_training
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: engineered_data
+      iotype: DIRECTORY
+      source:
+        node_id: feature_engineer
+        subgraph_id: null
+        output_id: return
+        graph_input_id: null
+      meta:
+        name: engineered_data
+        annotations: null
+    - id: base_model_output
+      iotype: DIRECTORY
+      source:
+        node_id: base_model_training
+        subgraph_id: null
+        output_id: return
+        graph_input_id: null
+      meta:
+        name: base_model_output
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: meta_model_hp
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: meta_model_training
+      annotations: null
+  subgraphs: []
+  inputs:
+  - id: raw_data
+    iotype: DIRECTORY
+    meta:
+      name: raw_data
+      annotations: null
+  - id: preproc_hp
+    iotype: FILE
+    meta:
+      name: preproc_hp
+      annotations: null
+  - id: fe_hp
+    iotype: FILE
+    meta:
+      name: fe_hp
+      annotations: null
+  - id: base_model_hp
+    iotype: FILE
+    meta:
+      name: base_model_hp
+      annotations: null
+  - id: meta_model_hp
+    iotype: FILE
+    meta:
+      name: meta_model_hp
+      annotations: null
+  outputs:
+  - id: return
+    iotype: DIRECTORY
+    source:
+      node_id: meta_model_training
+      subgraph_id: null
+      output_id: return
+      graph_input_id: null
+    meta:
+      name: return
+      annotations: null
+  meta:
+    name: ml_job
+    annotations: null

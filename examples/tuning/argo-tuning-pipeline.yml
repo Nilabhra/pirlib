@@ -1,0 +1,247 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: argo-tuning-pipeline-
+spec:
+  entrypoint: DAG-ml-job
+  templates:
+  - name: preprocess-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - node
+      - gASV1gIAAAAAAACMCnBpcmxpYi5waXKUjAROb2RllJOUKYGUfZQojAJpZJSMCnByZXByb2Nlc3OUjAtlbnRyeXBvaW50c5R9lIwEbWFpbpRoAIwKRW50cnlwb2ludJSTlCmBlH2UKIwHdmVyc2lvbpSMAnYxlIwHaGFuZGxlcpSMJmV4YW1wbGVzLnR1bmluZy5tbF9waXBlbGluZTpwcmVwcm9jZXNzlIwHcnVudGltZZSMCnB5dGhvbjozLjiUjAdjb2RldXJslE6MBWltYWdllIwPbmlsYWJocmEvdHVuaW5nlHVic4wJZnJhbWV3b3JrlE6MBmNvbmZpZ5R9lCiMBWNhY2hllIiMDmNhY2hlX2tleV9maWxllIwHaHBhcmFtc5R1jAZpbnB1dHOUXZQoaACMBUlucHV0lJOUKYGUfZQoaAWMCGRhdGFfZGlylIwGaW90eXBllIwJRElSRUNUT1JZlIwGc291cmNllGgAjApEYXRhU291cmNllJOUKYGUfZQojAdub2RlX2lklE6MC3N1YmdyYXBoX2lklE6MCW91dHB1dF9pZJROjA5ncmFwaF9pbnB1dF9pZJSMCHJhd19kYXRhlHVijARtZXRhlGgAjAhNZXRhZGF0YZSTlCmBlH2UKIwEbmFtZZSMCGRhdGFfZGlylIwLYW5ub3RhdGlvbnOUTnVidWJoICmBlH2UKGgFjAdocGFyYW1zlGgkjARGSUxFlGgmaCgpgZR9lChoK05oLE5oLU5oLowKcHJlcHJvY19ocJR1YmgwaDIpgZR9lChoNYwHaHBhcmFtc5RoN051YnViZYwHb3V0cHV0c5RdlGgAjAZPdXRwdXSUk5QpgZR9lChoBYwGcmV0dXJulGgkjAlESVJFQ1RPUlmUaDBoMimBlH2UKGg1jAZyZXR1cm6UaDdOdWJ1YmFoMGgyKYGUfZQoaDWMCnByZXByb2Nlc3OUaDdOdWJ1Yi4=
+      - gASVjwEAAAAAAABdlCiMCnBpcmxpYi5waXKUjApHcmFwaElucHV0lJOUKYGUfZQojAJpZJSMCHJhd19kYXRhlIwGaW90eXBllIwJRElSRUNUT1JZlIwEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAhyYXdfZGF0YZSMC2Fubm90YXRpb25zlE51YnViaAMpgZR9lChoBowKcHJlcHJvY19ocJRoCIwERklMRZRoCmgMKYGUfZQoaA+MCnByZXByb2NfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMBWZlX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wFZmVfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMDWJhc2VfbW9kZWxfaHCUaAiMBEZJTEWUaApoDCmBlH2UKGgPjA1iYXNlX21vZGVsX2hwlGgRTnVidWJoAymBlH2UKGgGjA1tZXRhX21vZGVsX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wNbWV0YV9tb2RlbF9ocJRoEU51YnViZS4=
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: raw-data
+        mountPath: /mnt/graph_inputs/raw_data
+      - name: preproc-hp
+        mountPath: /mnt/graph_inputs/preproc_hp
+        subPath: preprocess_hp.json
+      - name: cache-dir
+        mountPath: /pirlib/cache
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/outputs
+        readOnly: no
+    - name: raw-data
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: preproc-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: cache-dir
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/cache_dir
+        readOnly: no
+  - name: feature-engineer-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - node
+      - gASVXAMAAAAAAACMCnBpcmxpYi5waXKUjAROb2RllJOUKYGUfZQojAJpZJSMEGZlYXR1cmVfZW5naW5lZXKUjAtlbnRyeXBvaW50c5R9lIwEbWFpbpRoAIwKRW50cnlwb2ludJSTlCmBlH2UKIwHdmVyc2lvbpSMAnYxlIwHaGFuZGxlcpSMLGV4YW1wbGVzLnR1bmluZy5tbF9waXBlbGluZTpmZWF0dXJlX2VuZ2luZWVylIwHcnVudGltZZSMCnB5dGhvbjozLjiUjAdjb2RldXJslE6MBWltYWdllIwPbmlsYWJocmEvdHVuaW5nlHVic4wJZnJhbWV3b3JrlE6MBmNvbmZpZ5R9lCiMBWNhY2hllIiMDmNhY2hlX2tleV9maWxllIwHaHBhcmFtc5R1jAZpbnB1dHOUXZQoaACMBUlucHV0lJOUKYGUfZQoaAWMCGRhdGFfZGlylIwGaW90eXBllIwJRElSRUNUT1JZlIwGc291cmNllGgAjApEYXRhU291cmNllJOUKYGUfZQojAdub2RlX2lklE6MC3N1YmdyYXBoX2lklE6MCW91dHB1dF9pZJROjA5ncmFwaF9pbnB1dF9pZJSMCHJhd19kYXRhlHVijARtZXRhlGgAjAhNZXRhZGF0YZSTlCmBlH2UKIwEbmFtZZSMCGRhdGFfZGlylIwLYW5ub3RhdGlvbnOUTnVidWJoICmBlH2UKGgFjA5wcmVwcm9jZXNzX2RpcpRoJIwJRElSRUNUT1JZlGgmaCgpgZR9lChoK4wKcHJlcHJvY2Vzc5RoLE5oLYwGcmV0dXJulGguTnViaDBoMimBlH2UKGg1jA5wcmVwcm9jZXNzX2RpcpRoN051YnViaCApgZR9lChoBYwHaHBhcmFtc5RoJIwERklMRZRoJmgoKYGUfZQoaCtOaCxOaC1OaC6MBWZlX2hwlHViaDBoMimBlH2UKGg1jAdocGFyYW1zlGg3TnVidWJljAdvdXRwdXRzlF2UaACMBk91dHB1dJSTlCmBlH2UKGgFjAZyZXR1cm6UaCSMCURJUkVDVE9SWZRoMGgyKYGUfZQoaDWMBnJldHVybpRoN051YnViYWgwaDIpgZR9lChoNYwQZmVhdHVyZV9lbmdpbmVlcpRoN051YnViLg==
+      - gASVjwEAAAAAAABdlCiMCnBpcmxpYi5waXKUjApHcmFwaElucHV0lJOUKYGUfZQojAJpZJSMCHJhd19kYXRhlIwGaW90eXBllIwJRElSRUNUT1JZlIwEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAhyYXdfZGF0YZSMC2Fubm90YXRpb25zlE51YnViaAMpgZR9lChoBowKcHJlcHJvY19ocJRoCIwERklMRZRoCmgMKYGUfZQoaA+MCnByZXByb2NfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMBWZlX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wFZmVfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMDWJhc2VfbW9kZWxfaHCUaAiMBEZJTEWUaApoDCmBlH2UKGgPjA1iYXNlX21vZGVsX2hwlGgRTnVidWJoAymBlH2UKGgGjA1tZXRhX21vZGVsX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wNbWV0YV9tb2RlbF9ocJRoEU51YnViZS4=
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: raw-data
+        mountPath: /mnt/graph_inputs/raw_data
+      - name: fe-hp
+        mountPath: /mnt/graph_inputs/fe_hp
+        subPath: fe_hp.json
+      - name: cache-dir
+        mountPath: /pirlib/cache
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/outputs
+        readOnly: no
+    - name: raw-data
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: fe-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: cache-dir
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/cache_dir
+        readOnly: no
+  - name: base-model-training-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - node
+      - gASVEgMAAAAAAACMCnBpcmxpYi5waXKUjAROb2RllJOUKYGUfZQojAJpZJSME2Jhc2VfbW9kZWxfdHJhaW5pbmeUjAtlbnRyeXBvaW50c5R9lIwEbWFpbpRoAIwKRW50cnlwb2ludJSTlCmBlH2UKIwHdmVyc2lvbpSMAnYxlIwHaGFuZGxlcpSML2V4YW1wbGVzLnR1bmluZy5tbF9waXBlbGluZTpiYXNlX21vZGVsX3RyYWluaW5nlIwHcnVudGltZZSMCnB5dGhvbjozLjiUjAdjb2RldXJslE6MBWltYWdllIwPbmlsYWJocmEvdHVuaW5nlHVic4wJZnJhbWV3b3JrlE6MBmNvbmZpZ5R9lCiMBWNhY2hllIiMDmNhY2hlX2tleV9maWxllIwHaHBhcmFtc5R1jAZpbnB1dHOUXZQoaACMBUlucHV0lJOUKYGUfZQoaAWMD2VuZ2luZWVyZWRfZGF0YZSMBmlvdHlwZZSMCURJUkVDVE9SWZSMBnNvdXJjZZRoAIwKRGF0YVNvdXJjZZSTlCmBlH2UKIwHbm9kZV9pZJSMEGZlYXR1cmVfZW5naW5lZXKUjAtzdWJncmFwaF9pZJROjAlvdXRwdXRfaWSUjAZyZXR1cm6UjA5ncmFwaF9pbnB1dF9pZJROdWKMBG1ldGGUaACMCE1ldGFkYXRhlJOUKYGUfZQojARuYW1llIwPZW5naW5lZXJlZF9kYXRhlIwLYW5ub3RhdGlvbnOUTnVidWJoICmBlH2UKGgFjAdocGFyYW1zlGgkjARGSUxFlGgmaCgpgZR9lChoK05oLU5oLk5oMIwNYmFzZV9tb2RlbF9ocJR1YmgxaDMpgZR9lChoNowHaHBhcmFtc5RoOE51YnViZYwHb3V0cHV0c5RdlGgAjAZPdXRwdXSUk5QpgZR9lChoBYwGcmV0dXJulGgkjAlESVJFQ1RPUlmUaDFoMymBlH2UKGg2jAZyZXR1cm6UaDhOdWJ1YmFoMWgzKYGUfZQoaDaME2Jhc2VfbW9kZWxfdHJhaW5pbmeUaDhOdWJ1Yi4=
+      - gASVjwEAAAAAAABdlCiMCnBpcmxpYi5waXKUjApHcmFwaElucHV0lJOUKYGUfZQojAJpZJSMCHJhd19kYXRhlIwGaW90eXBllIwJRElSRUNUT1JZlIwEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAhyYXdfZGF0YZSMC2Fubm90YXRpb25zlE51YnViaAMpgZR9lChoBowKcHJlcHJvY19ocJRoCIwERklMRZRoCmgMKYGUfZQoaA+MCnByZXByb2NfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMBWZlX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wFZmVfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMDWJhc2VfbW9kZWxfaHCUaAiMBEZJTEWUaApoDCmBlH2UKGgPjA1iYXNlX21vZGVsX2hwlGgRTnVidWJoAymBlH2UKGgGjA1tZXRhX21vZGVsX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wNbWV0YV9tb2RlbF9ocJRoEU51YnViZS4=
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: base-model-hp
+        mountPath: /mnt/graph_inputs/base_model_hp
+        subPath: base_model_hp.json
+      - name: cache-dir
+        mountPath: /pirlib/cache
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/outputs
+        readOnly: no
+    - name: base-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: cache-dir
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/cache_dir
+        readOnly: no
+  - name: meta-model-training-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - node
+      - gASVmgMAAAAAAACMCnBpcmxpYi5waXKUjAROb2RllJOUKYGUfZQojAJpZJSME21ldGFfbW9kZWxfdHJhaW5pbmeUjAtlbnRyeXBvaW50c5R9lIwEbWFpbpRoAIwKRW50cnlwb2ludJSTlCmBlH2UKIwHdmVyc2lvbpSMAnYxlIwHaGFuZGxlcpSML2V4YW1wbGVzLnR1bmluZy5tbF9waXBlbGluZTptZXRhX21vZGVsX3RyYWluaW5nlIwHcnVudGltZZSMCnB5dGhvbjozLjiUjAdjb2RldXJslE6MBWltYWdllIwPbmlsYWJocmEvdHVuaW5nlHVic4wJZnJhbWV3b3JrlE6MBmNvbmZpZ5R9lCiMBWNhY2hllIiMDmNhY2hlX2tleV9maWxllIwHaHBhcmFtc5R1jAZpbnB1dHOUXZQoaACMBUlucHV0lJOUKYGUfZQoaAWMD2VuZ2luZWVyZWRfZGF0YZSMBmlvdHlwZZSMCURJUkVDVE9SWZSMBnNvdXJjZZRoAIwKRGF0YVNvdXJjZZSTlCmBlH2UKIwHbm9kZV9pZJSMEGZlYXR1cmVfZW5naW5lZXKUjAtzdWJncmFwaF9pZJROjAlvdXRwdXRfaWSUjAZyZXR1cm6UjA5ncmFwaF9pbnB1dF9pZJROdWKMBG1ldGGUaACMCE1ldGFkYXRhlJOUKYGUfZQojARuYW1llIwPZW5naW5lZXJlZF9kYXRhlIwLYW5ub3RhdGlvbnOUTnVidWJoICmBlH2UKGgFjBFiYXNlX21vZGVsX291dHB1dJRoJIwJRElSRUNUT1JZlGgmaCgpgZR9lChoK4wTYmFzZV9tb2RlbF90cmFpbmluZ5RoLU5oLowGcmV0dXJulGgwTnViaDFoMymBlH2UKGg2jBFiYXNlX21vZGVsX291dHB1dJRoOE51YnViaCApgZR9lChoBYwHaHBhcmFtc5RoJIwERklMRZRoJmgoKYGUfZQoaCtOaC1OaC5OaDCMDW1ldGFfbW9kZWxfaHCUdWJoMWgzKYGUfZQoaDaMB2hwYXJhbXOUaDhOdWJ1YmWMB291dHB1dHOUXZRoAIwGT3V0cHV0lJOUKYGUfZQoaAWMBnJldHVybpRoJIwJRElSRUNUT1JZlGgxaDMpgZR9lChoNowGcmV0dXJulGg4TnVidWJhaDFoMymBlH2UKGg2jBNtZXRhX21vZGVsX3RyYWluaW5nlGg4TnVidWIu
+      - gASVjwEAAAAAAABdlCiMCnBpcmxpYi5waXKUjApHcmFwaElucHV0lJOUKYGUfZQojAJpZJSMCHJhd19kYXRhlIwGaW90eXBllIwJRElSRUNUT1JZlIwEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAhyYXdfZGF0YZSMC2Fubm90YXRpb25zlE51YnViaAMpgZR9lChoBowKcHJlcHJvY19ocJRoCIwERklMRZRoCmgMKYGUfZQoaA+MCnByZXByb2NfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMBWZlX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wFZmVfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMDWJhc2VfbW9kZWxfaHCUaAiMBEZJTEWUaApoDCmBlH2UKGgPjA1iYXNlX21vZGVsX2hwlGgRTnVidWJoAymBlH2UKGgGjA1tZXRhX21vZGVsX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wNbWV0YV9tb2RlbF9ocJRoEU51YnViZS4=
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: meta-model-hp
+        mountPath: /mnt/graph_inputs/meta_model_hp
+        subPath: meta_model_hp.json
+      - name: cache-dir
+        mountPath: /pirlib/cache
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/outputs
+        readOnly: no
+    - name: meta-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: cache-dir
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/cache_dir
+        readOnly: no
+  - name: ml-job-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - graph
+      - gASVAQEAAAAAAABdlIwKcGlybGliLnBpcpSMC0dyYXBoT3V0cHV0lJOUKYGUfZQojAJpZJSMBnJldHVybpSMBmlvdHlwZZSMCURJUkVDVE9SWZSMBnNvdXJjZZRoAYwKRGF0YVNvdXJjZZSTlCmBlH2UKIwHbm9kZV9pZJSME21ldGFfbW9kZWxfdHJhaW5pbmeUjAtzdWJncmFwaF9pZJROjAlvdXRwdXRfaWSUjAZyZXR1cm6UjA5ncmFwaF9pbnB1dF9pZJROdWKMBG1ldGGUaAGMCE1ldGFkYXRhlJOUKYGUfZQojARuYW1llIwGcmV0dXJulIwLYW5ub3RhdGlvbnOUTnVidWJhLg==
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: raw-data
+        mountPath: /mnt/graph_inputs/raw_data
+      - name: preproc-hp
+        mountPath: /mnt/graph_inputs/preproc_hp
+        subPath: preprocess_hp.json
+      - name: fe-hp
+        mountPath: /mnt/graph_inputs/fe_hp
+        subPath: fe_hp.json
+      - name: base-model-hp
+        mountPath: /mnt/graph_inputs/base_model_hp
+        subPath: base_model_hp.json
+      - name: meta-model-hp
+        mountPath: /mnt/graph_inputs/meta_model_hp
+        subPath: meta_model_hp.json
+      - name: graph-outputs
+        mountPath: /mnt/graph_outputs
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/outputs
+        readOnly: no
+    - name: raw-data
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: preproc-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: fe-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: base-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: meta-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/data
+        readOnly: yes
+    - name: graph-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/tuning/outputs
+        readOnly: no
+  - name: DAG-ml-job
+    dag:
+      tasks:
+      - name: preprocess
+        template: preprocess-template
+        dependencies: []
+      - name: feature-engineer
+        template: feature-engineer-template
+        dependencies:
+        - preprocess
+      - name: base-model-training
+        template: base-model-training-template
+        dependencies:
+        - feature-engineer
+      - name: meta-model-training
+        template: meta-model-training-template
+        dependencies:
+        - feature-engineer
+        - base-model-training
+      - name: ml-job
+        template: ml-job-template
+        dependencies:
+        - preprocess
+        - feature-engineer
+        - base-model-training
+        - meta-model-training
