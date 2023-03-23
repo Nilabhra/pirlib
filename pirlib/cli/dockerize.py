@@ -107,7 +107,7 @@ def _generate_dockerfile(context_path: pathlib.Path) -> str:
 
     return "\n".join(
         [
-            "FROM continuumio/miniconda3:22.11.1",
+            "FROM continuumio/miniconda3:4.12.0",
             "ARG CONDA_ENV_B64",
             "RUN echo $CONDA_ENV_B64 | base64 -d > /tmp/environment.yml",
             "RUN conda env create -n pircli -f /tmp/environment.yml",
