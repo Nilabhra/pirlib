@@ -127,7 +127,7 @@ class TaskDefinition(HandlerV1):
 
     def cache_wrapper(self, func):
         """
-        Wrape this function by cache.
+        Wrap this function by cache.
         """
         print("Add cache to func: {}()".format(func.__name__))
 
@@ -167,13 +167,13 @@ class TaskDefinition(HandlerV1):
 
     def timer_wrapper(self, func):
         """
-        Wrape this function by timer.
+        Wrap this function by timer.
         """
         print("Add timer to func: {}()".format(func.__name__))
 
         @functools.wraps(func)
         def run_func_with_timer(*args, **kwargs):
-            with PerformanceTimer(self.func.__name__):
+            with PerformanceTimer(self.func.__name__, task_context().output):
                 return_value = func(*args, **kwargs)
             return return_value
 

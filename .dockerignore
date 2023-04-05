@@ -4,5 +4,6 @@
 !examples/wiki_parser/*.py
 !examples/caching/*.py
 !examples/tuning/*.py
+!examples/stacking/*.py
 !bin
 !pirlib

@@ -1,0 +1,226 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: argo-stacking-pipeline-
+spec:
+  entrypoint: DAG-ml-job
+  templates:
+  - name: preprocess-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - node
+      - gASVrQMAAAAAAACMCnBpcmxpYi5waXKUjAROb2RllJOUKYGUfZQojAJpZJSMCnByZXByb2Nlc3OUjAtlbnRyeXBvaW50c5R9lIwEbWFpbpRoAIwKRW50cnlwb2ludJSTlCmBlH2UKIwHdmVyc2lvbpSMAnYxlIwHaGFuZGxlcpSMJWV4YW1wbGVzLnN0YWNraW5nLnBpcGVsaW5lOnByZXByb2Nlc3OUjAdydW50aW1llIwKcHl0aG9uOjMuOJSMB2NvZGV1cmyUTowFaW1hZ2WUjA9uaWxhYmhyYS90dW5pbmeUdWJzjAlmcmFtZXdvcmuUTowGY29uZmlnlH2UKIwFdGltZXKUiIwFY2FjaGWUiIwOY2FjaGVfa2V5X2ZpbGWUjAdocGFyYW1zlHWMBmlucHV0c5RdlChoAIwFSW5wdXSUk5QpgZR9lChoBYwKdHJhaW5fcGF0aJSMBmlvdHlwZZSMBEZJTEWUjAZzb3VyY2WUaACMCkRhdGFTb3VyY2WUk5QpgZR9lCiMB25vZGVfaWSUTowLc3ViZ3JhcGhfaWSUTowJb3V0cHV0X2lklE6MDmdyYXBoX2lucHV0X2lklIwKdHJhaW5fcGF0aJR1YowEbWV0YZRoAIwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAp0cmFpbl9wYXRolIwLYW5ub3RhdGlvbnOUTnVidWJoISmBlH2UKGgFjA1wcmV2X2FwcF9wYXRolGgljARGSUxFlGgnaCkpgZR9lChoLE5oLU5oLk5oL4wNcHJldl9hcHBfcGF0aJR1YmgxaDMpgZR9lChoNowNcHJldl9hcHBfcGF0aJRoOE51YnViaCEpgZR9lChoBYwJdGVzdF9wYXRolGgljARGSUxFlGgnaCkpgZR9lChoLE5oLU5oLk5oL4wJdGVzdF9wYXRolHViaDFoMymBlH2UKGg2jAl0ZXN0X3BhdGiUaDhOdWJ1YmghKYGUfZQoaAWMB2hwYXJhbXOUaCWMBEZJTEWUaCdoKSmBlH2UKGgsTmgtTmguTmgvjApwcmVwcm9jX2hwlHViaDFoMymBlH2UKGg2jAdocGFyYW1zlGg4TnVidWJljAdvdXRwdXRzlF2UaACMBk91dHB1dJSTlCmBlH2UKGgFjAZyZXR1cm6UaCWMCURJUkVDVE9SWZRoMWgzKYGUfZQoaDaMBnJldHVybpRoOE51YnViYWgxaDMpgZR9lChoNowKcHJlcHJvY2Vzc5RoOE51YnViLg==
+      - gASV3AEAAAAAAABdlCiMCnBpcmxpYi5waXKUjApHcmFwaElucHV0lJOUKYGUfZQojAJpZJSMCnRyYWluX3BhdGiUjAZpb3R5cGWUjARGSUxFlIwEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAp0cmFpbl9wYXRolIwLYW5ub3RhdGlvbnOUTnVidWJoAymBlH2UKGgGjA1wcmV2X2FwcF9wYXRolGgIjARGSUxFlGgKaAwpgZR9lChoD4wNcHJldl9hcHBfcGF0aJRoEU51YnViaAMpgZR9lChoBowJdGVzdF9wYXRolGgIjARGSUxFlGgKaAwpgZR9lChoD4wJdGVzdF9wYXRolGgRTnVidWJoAymBlH2UKGgGjApwcmVwcm9jX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wKcHJlcHJvY19ocJRoEU51YnViaAMpgZR9lChoBowNYmFzZV9tb2RlbF9ocJRoCIwERklMRZRoCmgMKYGUfZQoaA+MDWJhc2VfbW9kZWxfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMDW1ldGFfbW9kZWxfaHCUaAiMBEZJTEWUaApoDCmBlH2UKGgPjA1tZXRhX21vZGVsX2hwlGgRTnVidWJlLg==
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: train-path
+        mountPath: /mnt/graph_inputs/train_path
+        subPath: train.csv
+      - name: prev-app-path
+        mountPath: /mnt/graph_inputs/prev_app_path
+        subPath: previous_application.csv
+      - name: test-path
+        mountPath: /mnt/graph_inputs/test_path
+        subPath: test.csv
+      - name: preproc-hp
+        mountPath: /mnt/graph_inputs/preproc_hp
+        subPath: preproc_hp.json
+      - name: cache-dir
+        mountPath: /pirlib/cache
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/outputs
+        readOnly: no
+    - name: train-path
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: prev-app-path
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: test-path
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: preproc-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: cache-dir
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/cache_dir
+        readOnly: no
+  - name: build-basemodels-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - node
+      - gASV/QIAAAAAAACMCnBpcmxpYi5waXKUjAROb2RllJOUKYGUfZQojAJpZJSMEGJ1aWxkX2Jhc2Vtb2RlbHOUjAtlbnRyeXBvaW50c5R9lIwEbWFpbpRoAIwKRW50cnlwb2ludJSTlCmBlH2UKIwHdmVyc2lvbpSMAnYxlIwHaGFuZGxlcpSMK2V4YW1wbGVzLnN0YWNraW5nLnBpcGVsaW5lOmJ1aWxkX2Jhc2Vtb2RlbHOUjAdydW50aW1llIwKcHl0aG9uOjMuOJSMB2NvZGV1cmyUTowFaW1hZ2WUjA9uaWxhYmhyYS90dW5pbmeUdWJzjAlmcmFtZXdvcmuUTowGY29uZmlnlH2UKIwFdGltZXKUiIwFY2FjaGWUiIwOY2FjaGVfa2V5X2ZpbGWUjAdocGFyYW1zlHWMBmlucHV0c5RdlChoAIwFSW5wdXSUk5QpgZR9lChoBYwIZGF0YV9kaXKUjAZpb3R5cGWUjAlESVJFQ1RPUlmUjAZzb3VyY2WUaACMCkRhdGFTb3VyY2WUk5QpgZR9lCiMB25vZGVfaWSUjApwcmVwcm9jZXNzlIwLc3ViZ3JhcGhfaWSUTowJb3V0cHV0X2lklIwGcmV0dXJulIwOZ3JhcGhfaW5wdXRfaWSUTnVijARtZXRhlGgAjAhNZXRhZGF0YZSTlCmBlH2UKIwEbmFtZZSMCGRhdGFfZGlylIwLYW5ub3RhdGlvbnOUTnVidWJoISmBlH2UKGgFjAdocGFyYW1zlGgljARGSUxFlGgnaCkpgZR9lChoLE5oLk5oL05oMYwNYmFzZV9tb2RlbF9ocJR1YmgyaDQpgZR9lChoN4wHaHBhcmFtc5RoOU51YnViZYwHb3V0cHV0c5RdlGgAjAZPdXRwdXSUk5QpgZR9lChoBYwGcmV0dXJulGgljAlESVJFQ1RPUlmUaDJoNCmBlH2UKGg3jAZyZXR1cm6UaDlOdWJ1YmFoMmg0KYGUfZQoaDeMEGJ1aWxkX2Jhc2Vtb2RlbHOUaDlOdWJ1Yi4=
+      - gASV3AEAAAAAAABdlCiMCnBpcmxpYi5waXKUjApHcmFwaElucHV0lJOUKYGUfZQojAJpZJSMCnRyYWluX3BhdGiUjAZpb3R5cGWUjARGSUxFlIwEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAp0cmFpbl9wYXRolIwLYW5ub3RhdGlvbnOUTnVidWJoAymBlH2UKGgGjA1wcmV2X2FwcF9wYXRolGgIjARGSUxFlGgKaAwpgZR9lChoD4wNcHJldl9hcHBfcGF0aJRoEU51YnViaAMpgZR9lChoBowJdGVzdF9wYXRolGgIjARGSUxFlGgKaAwpgZR9lChoD4wJdGVzdF9wYXRolGgRTnVidWJoAymBlH2UKGgGjApwcmVwcm9jX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wKcHJlcHJvY19ocJRoEU51YnViaAMpgZR9lChoBowNYmFzZV9tb2RlbF9ocJRoCIwERklMRZRoCmgMKYGUfZQoaA+MDWJhc2VfbW9kZWxfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMDW1ldGFfbW9kZWxfaHCUaAiMBEZJTEWUaApoDCmBlH2UKGgPjA1tZXRhX21vZGVsX2hwlGgRTnVidWJlLg==
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: base-model-hp
+        mountPath: /mnt/graph_inputs/base_model_hp
+        subPath: base_model_hp.json
+      - name: cache-dir
+        mountPath: /pirlib/cache
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/outputs
+        readOnly: no
+    - name: base-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: cache-dir
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/cache_dir
+        readOnly: no
+  - name: build-metamodel-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - node
+      - gASVAAMAAAAAAACMCnBpcmxpYi5waXKUjAROb2RllJOUKYGUfZQojAJpZJSMD2J1aWxkX21ldGFtb2RlbJSMC2VudHJ5cG9pbnRzlH2UjARtYWlulGgAjApFbnRyeXBvaW50lJOUKYGUfZQojAd2ZXJzaW9ulIwCdjGUjAdoYW5kbGVylIwqZXhhbXBsZXMuc3RhY2tpbmcucGlwZWxpbmU6YnVpbGRfbWV0YW1vZGVslIwHcnVudGltZZSMCnB5dGhvbjozLjiUjAdjb2RldXJslE6MBWltYWdllIwPbmlsYWJocmEvdHVuaW5nlHVic4wJZnJhbWV3b3JrlE6MBmNvbmZpZ5R9lCiMBXRpbWVylIiMBWNhY2hllIiMDmNhY2hlX2tleV9maWxllIwHaHBhcmFtc5R1jAZpbnB1dHOUXZQoaACMBUlucHV0lJOUKYGUfZQoaAWMCGRhdGFfZGlylIwGaW90eXBllIwJRElSRUNUT1JZlIwGc291cmNllGgAjApEYXRhU291cmNllJOUKYGUfZQojAdub2RlX2lklIwQYnVpbGRfYmFzZW1vZGVsc5SMC3N1YmdyYXBoX2lklE6MCW91dHB1dF9pZJSMBnJldHVybpSMDmdyYXBoX2lucHV0X2lklE51YowEbWV0YZRoAIwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAhkYXRhX2RpcpSMC2Fubm90YXRpb25zlE51YnViaCEpgZR9lChoBYwHaHBhcmFtc5RoJYwERklMRZRoJ2gpKYGUfZQoaCxOaC5OaC9OaDGMDW1ldGFfbW9kZWxfaHCUdWJoMmg0KYGUfZQoaDeMB2hwYXJhbXOUaDlOdWJ1YmWMB291dHB1dHOUXZRoAIwGT3V0cHV0lJOUKYGUfZQoaAWMBnJldHVybpRoJYwJRElSRUNUT1JZlGgyaDQpgZR9lChoN4wGcmV0dXJulGg5TnVidWJhaDJoNCmBlH2UKGg3jA9idWlsZF9tZXRhbW9kZWyUaDlOdWJ1Yi4=
+      - gASV3AEAAAAAAABdlCiMCnBpcmxpYi5waXKUjApHcmFwaElucHV0lJOUKYGUfZQojAJpZJSMCnRyYWluX3BhdGiUjAZpb3R5cGWUjARGSUxFlIwEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAp0cmFpbl9wYXRolIwLYW5ub3RhdGlvbnOUTnVidWJoAymBlH2UKGgGjA1wcmV2X2FwcF9wYXRolGgIjARGSUxFlGgKaAwpgZR9lChoD4wNcHJldl9hcHBfcGF0aJRoEU51YnViaAMpgZR9lChoBowJdGVzdF9wYXRolGgIjARGSUxFlGgKaAwpgZR9lChoD4wJdGVzdF9wYXRolGgRTnVidWJoAymBlH2UKGgGjApwcmVwcm9jX2hwlGgIjARGSUxFlGgKaAwpgZR9lChoD4wKcHJlcHJvY19ocJRoEU51YnViaAMpgZR9lChoBowNYmFzZV9tb2RlbF9ocJRoCIwERklMRZRoCmgMKYGUfZQoaA+MDWJhc2VfbW9kZWxfaHCUaBFOdWJ1YmgDKYGUfZQoaAaMDW1ldGFfbW9kZWxfaHCUaAiMBEZJTEWUaApoDCmBlH2UKGgPjA1tZXRhX21vZGVsX2hwlGgRTnVidWJlLg==
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: meta-model-hp
+        mountPath: /mnt/graph_inputs/meta_model_hp
+        subPath: meta_model_hp.json
+      - name: cache-dir
+        mountPath: /pirlib/cache
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/outputs
+        readOnly: no
+    - name: meta-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: cache-dir
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/cache_dir
+        readOnly: no
+  - name: ml-job-template
+    container:
+      image: nilabhra/tuning
+      command:
+      - python
+      - -m
+      - pirlib.backends.argo_batch
+      - graph
+      - gASV/QAAAAAAAABdlIwKcGlybGliLnBpcpSMC0dyYXBoT3V0cHV0lJOUKYGUfZQojAJpZJSMBnJldHVybpSMBmlvdHlwZZSMCURJUkVDVE9SWZSMBnNvdXJjZZRoAYwKRGF0YVNvdXJjZZSTlCmBlH2UKIwHbm9kZV9pZJSMD2J1aWxkX21ldGFtb2RlbJSMC3N1YmdyYXBoX2lklE6MCW91dHB1dF9pZJSMBnJldHVybpSMDmdyYXBoX2lucHV0X2lklE51YowEbWV0YZRoAYwITWV0YWRhdGGUk5QpgZR9lCiMBG5hbWWUjAZyZXR1cm6UjAthbm5vdGF0aW9uc5ROdWJ1YmEu
+      volumeMounts:
+      - name: node-outputs
+        mountPath: /mnt/node_outputs
+      - name: train-path
+        mountPath: /mnt/graph_inputs/train_path
+        subPath: train.csv
+      - name: prev-app-path
+        mountPath: /mnt/graph_inputs/prev_app_path
+        subPath: previous_application.csv
+      - name: test-path
+        mountPath: /mnt/graph_inputs/test_path
+        subPath: test.csv
+      - name: preproc-hp
+        mountPath: /mnt/graph_inputs/preproc_hp
+        subPath: preproc_hp.json
+      - name: base-model-hp
+        mountPath: /mnt/graph_inputs/base_model_hp
+        subPath: base_model_hp.json
+      - name: meta-model-hp
+        mountPath: /mnt/graph_inputs/meta_model_hp
+        subPath: meta_model_hp.json
+      - name: graph-outputs
+        mountPath: /mnt/graph_outputs
+    volumes:
+    - name: node-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/outputs
+        readOnly: no
+    - name: train-path
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: prev-app-path
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: test-path
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: preproc-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: base-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: meta-model-hp
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/inputs
+        readOnly: yes
+    - name: graph-outputs
+      nfs:
+        server: k8s-master.cm.cluster
+        path: /home/nilabhra/kaggle/pirlib/examples/stacking/outputs
+        readOnly: no
+  - name: DAG-ml-job
+    dag:
+      tasks:
+      - name: preprocess
+        template: preprocess-template
+        dependencies: []
+      - name: build-basemodels
+        template: build-basemodels-template
+        dependencies:
+        - preprocess
+      - name: build-metamodel
+        template: build-metamodel-template
+        dependencies:
+        - build-basemodels
+      - name: ml-job
+        template: ml-job-template
+        dependencies:
+        - preprocess
+        - build-basemodels
+        - build-metamodel

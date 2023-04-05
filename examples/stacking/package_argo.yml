@@ -1,0 +1,198 @@
+graphs:
+- id: ml_job
+  nodes:
+  - id: preprocess
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.stacking.pipeline:preprocess
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      timer: true
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: train_path
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: train_path
+      meta:
+        name: train_path
+        annotations: null
+    - id: prev_app_path
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: prev_app_path
+      meta:
+        name: prev_app_path
+        annotations: null
+    - id: test_path
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: test_path
+      meta:
+        name: test_path
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: preproc_hp
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: preprocess
+      annotations: null
+  - id: build_basemodels
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.stacking.pipeline:build_basemodels
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      timer: true
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: data_dir
+      iotype: DIRECTORY
+      source:
+        node_id: preprocess
+        subgraph_id: null
+        output_id: return
+        graph_input_id: null
+      meta:
+        name: data_dir
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: base_model_hp
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: build_basemodels
+      annotations: null
+  - id: build_metamodel
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.stacking.pipeline:build_metamodel
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      timer: true
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: data_dir
+      iotype: DIRECTORY
+      source:
+        node_id: build_basemodels
+        subgraph_id: null
+        output_id: return
+        graph_input_id: null
+      meta:
+        name: data_dir
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: meta_model_hp
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: build_metamodel
+      annotations: null
+  subgraphs: []
+  inputs:
+  - id: train_path
+    iotype: FILE
+    meta:
+      name: train_path
+      annotations: null
+  - id: prev_app_path
+    iotype: FILE
+    meta:
+      name: prev_app_path
+      annotations: null
+  - id: test_path
+    iotype: FILE
+    meta:
+      name: test_path
+      annotations: null
+  - id: preproc_hp
+    iotype: FILE
+    meta:
+      name: preproc_hp
+      annotations: null
+  - id: base_model_hp
+    iotype: FILE
+    meta:
+      name: base_model_hp
+      annotations: null
+  - id: meta_model_hp
+    iotype: FILE
+    meta:
+      name: meta_model_hp
+      annotations: null
+  outputs:
+  - id: return
+    iotype: DIRECTORY
+    source:
+      node_id: build_metamodel
+      subgraph_id: null
+      output_id: return
+      graph_input_id: null
+    meta:
+      name: return
+      annotations: null
+  meta:
+    name: ml_job
+    annotations: null
