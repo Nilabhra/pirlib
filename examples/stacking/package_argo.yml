@@ -64,11 +64,11 @@ graphs:
     meta:
       name: preprocess
       annotations: null
-  - id: build_basemodels
+  - id: build_basemodels1
     entrypoints:
       main:
         version: v1
-        handler: examples.stacking.pipeline:build_basemodels
+        handler: examples.stacking.pipeline:build_basemodels1
         runtime: python:3.8
         codeurl: null
         image: nilabhra/tuning
@@ -94,7 +94,7 @@ graphs:
         node_id: null
         subgraph_id: null
         output_id: null
-        graph_input_id: base_model_hp
+        graph_input_id: base_model_hp1
       meta:
         name: hparams
         annotations: null
@@ -105,7 +105,50 @@ graphs:
         name: return
         annotations: null
     meta:
-      name: build_basemodels
+      name: build_basemodels1
+      annotations: null
+  - id: build_basemodels2
+    entrypoints:
+      main:
+        version: v1
+        handler: examples.stacking.pipeline:build_basemodels2
+        runtime: python:3.8
+        codeurl: null
+        image: nilabhra/tuning
+    framework: null
+    config:
+      timer: true
+      cache: true
+      cache_key_file: hparams
+    inputs:
+    - id: data_dir
+      iotype: DIRECTORY
+      source:
+        node_id: build_basemodels1
+        subgraph_id: null
+        output_id: return
+        graph_input_id: null
+      meta:
+        name: data_dir
+        annotations: null
+    - id: hparams
+      iotype: FILE
+      source:
+        node_id: null
+        subgraph_id: null
+        output_id: null
+        graph_input_id: base_model_hp2
+      meta:
+        name: hparams
+        annotations: null
+    outputs:
+    - id: return
+      iotype: DIRECTORY
+      meta:
+        name: return
+        annotations: null
+    meta:
+      name: build_basemodels2
       annotations: null
   - id: build_metamodel
     entrypoints:
@@ -124,7 +167,7 @@ graphs:
     - id: data_dir
       iotype: DIRECTORY
       source:
-        node_id: build_basemodels
+        node_id: build_basemodels2
         subgraph_id: null
         output_id: return
         graph_input_id: null
@@ -172,10 +215,15 @@ graphs:
     meta:
       name: preproc_hp
       annotations: null
-  - id: base_model_hp
+  - id: base_model_hp1
     iotype: FILE
     meta:
-      name: base_model_hp
+      name: base_model_hp1
+      annotations: null
+  - id: base_model_hp2
+    iotype: FILE
+    meta:
+      name: base_model_hp2
       annotations: null
   - id: meta_model_hp
     iotype: FILE

@@ -1,1 +1,1 @@
-python param_gen.py && bash examples/tuning/run_pipeline.sh
+python param_gen_v2.py --trial 0 --iter 0 --stage_outputs ./hparams/stage_zero_cost.json ./hparams/stage_one_cost.json ./hparams/stage_two_cost.json && bash run_pipeline.sh

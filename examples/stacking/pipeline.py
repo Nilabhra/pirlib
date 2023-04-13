@@ -8,7 +8,7 @@ from pirlib.pipeline import pipeline
 from pirlib.task import task
 
 from .data_processing import prepare_data
-from .modelling import train_basemodels, train_metamodel
+from .modelling import train_basemodels1, train_basemodels2, train_metamodel
 
 
 @task(cache=True, cache_key_file="hparams", timer=True)
@@ -33,7 +33,7 @@ def preprocess(
 
 
 @task(cache=True, cache_key_file="hparams", timer=True)
-def build_basemodels(data_dir: DirectoryPath, *, hparams: FilePath) -> DirectoryPath:
+def build_basemodels1(data_dir: DirectoryPath, *, hparams: FilePath) -> DirectoryPath:
     # Read preprocessed data.
     train = pd.read_csv(data_dir / "train_preprocessed.csv")
     test = pd.read_csv(data_dir / "test_preprocessed.csv")
@@ -43,7 +43,35 @@ def build_basemodels(data_dir: DirectoryPath, *, hparams: FilePath) -> Directory
         hp = json.load(f)
 
     # Train the base models.
-    oof_data = train_basemodels(train, test, hp)
+    oof_data = train_basemodels1(train, test, hp)
+
+    # Write the OOF data to disk.
+    output_dir = task.context().output
+    with (output_dir / "basemodels1_out.pkl").open("wb") as f:
+        pickle.dump(oof_data, f)
+        
+    train.to_csv(output_dir / "train_preprocessed.csv", index=False)
+    test.to_csv(output_dir / "test_preprocessed.csv", index=False)
+
+    return output_dir
+
+
+@task(cache=True, cache_key_file="hparams", timer=True)
+def build_basemodels2(data_dir: DirectoryPath, *, hparams: FilePath) -> DirectoryPath:
+    # Read preprocessed data.
+    train = pd.read_csv(data_dir / "train_preprocessed.csv")
+    test = pd.read_csv(data_dir / "test_preprocessed.csv")
+    with (data_dir / "basemodels1_out.pkl").open("rb") as f:
+        basemodels1_out = pickle.load(f)
+        prv_stg_train = basemodels1_out["test"]
+        prv_stg_test = basemodels1_out["test"]
+
+    # Read hyperparameters.
+    with hparams.open() as f:
+        hp = json.load(f)
+
+    # Train the base models.
+    oof_data = train_basemodels2(train, test, prv_stg_train, prv_stg_test, hp)
 
     # Write the OOF data to disk.
     output_dir = task.context().output
@@ -87,16 +115,18 @@ def ml_job(
     prev_app_path: FilePath,
     test_path: FilePath,
     preproc_hp: FilePath,
-    base_model_hp: FilePath,
+    base_model_hp1: FilePath,
+    base_model_hp2: FilePath,
     meta_model_hp: FilePath,
 ) -> DirectoryPath:
     # Preprocess.
     preprocessed_data = preprocess(train_path, prev_app_path, test_path, hparams=preproc_hp)
 
     # Train base models.
-    base_model_op = build_basemodels(preprocessed_data, hparams=base_model_hp)
+    base_model_op1 = build_basemodels1(preprocessed_data, hparams=base_model_hp1)
+    base_model_op1 = build_basemodels2(base_model_op1, hparams=base_model_hp2)
 
     # Train the meta model and generate test AU-ROC score.
-    meta_model_op = build_metamodel(base_model_op, hparams=meta_model_hp)
+    meta_model_op = build_metamodel(base_model_op1, hparams=meta_model_hp)
 
     return meta_model_op

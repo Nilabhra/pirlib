@@ -1,7 +1,7 @@
 EXAMPLEDIR=$(dirname $0)
 ROOTDIR=$EXAMPLEDIR/../..
 
-export DOCKER_USER=nilabhra
+export DOCKER_USER=ridzy619
 export PIRLIB_REPO=tuning
 
 # Dockerize current environment

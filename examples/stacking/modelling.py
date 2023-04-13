@@ -69,7 +69,7 @@ class XgbWrapper(object):
 def get_oof(clf, x_train, y_train, x_test, n_folds=3):
     oof_train = np.zeros((x_train.shape[0],))
     oof_test = np.zeros((x_test.shape[0],))
-    oof_test_skf = np.empty((NFOLDS, x_test.shape[0]))
+    oof_test_skf = np.empty((n_folds, x_test.shape[0]))
 
     kf = KFold(n_splits=n_folds, shuffle=True)
     for i, (train_index, test_index) in enumerate(kf.split(x_train)):
@@ -85,13 +85,32 @@ def get_oof(clf, x_train, y_train, x_test, n_folds=3):
     oof_test[:] = oof_test_skf.mean(axis=0)
     return oof_train.reshape(-1, 1), oof_test.reshape(-1, 1)
 
-
-def train_basemodels(
+def train_basemodels1(
     train: pd.DataFrame, test: pd.DataFrame, params: Dict[str, Any]
 ) -> Dict[str, Any]:
     # Initiate the meta models.
     xg = XgbWrapper(seed=SEED, params=params["xgb_params"])
     et = SklearnWrapper(clf=ExtraTreesClassifier, seed=SEED, params=params["et_params"])
+    
+    # Separate features from targets.
+    y_train = train["TARGET"]
+    y_test = test["TARGET"]
+    x_train = train.drop("TARGET", axis=1)
+    x_test = test.drop("TARGET", axis=1)
+    
+    # Train the meta modles.
+    xg_oof_train, xg_oof_test = get_oof(xg, x_train, y_train, x_test)
+    et_oof_train, et_oof_test = get_oof(et, x_train, y_train, x_test)
+    
+    x_train = np.concatenate((xg_oof_train, et_oof_train), axis=1)
+    x_test = np.concatenate((xg_oof_test, et_oof_test), axis=1)
+    
+    return {"train": x_train, "test": x_test}
+    
+def train_basemodels2(
+    train: pd.DataFrame, test: pd.DataFrame, prv_stg_train: pd.DataFrame, prv_stg_test: pd.DataFrame, params: Dict[str, Any]
+) -> Dict[str, Any]:
+    # Initiate the meta models.
     rf = SklearnWrapper(clf=RandomForestClassifier, seed=SEED, params=params["rf_params"])
     cb = CatboostWrapper(clf=CatBoostClassifier, seed=SEED, params=params["catboost_params"])
 
@@ -102,13 +121,11 @@ def train_basemodels(
     x_test = test.drop("TARGET", axis=1)
 
     # Train the meta modles.
-    xg_oof_train, xg_oof_test = get_oof(xg, x_train, y_train, x_test)
-    et_oof_train, et_oof_test = get_oof(et, x_train, y_train, x_test)
     rf_oof_train, rf_oof_test = get_oof(rf, x_train, y_train, x_test)
     cb_oof_train, cb_oof_test = get_oof(cb, x_train, y_train, x_test)
 
-    x_train = np.concatenate((xg_oof_train, et_oof_train, rf_oof_train, cb_oof_train), axis=1)
-    x_test = np.concatenate((xg_oof_test, et_oof_test, rf_oof_test, cb_oof_test), axis=1)
+    x_train = np.concatenate((prv_stg_train, rf_oof_train, cb_oof_train), axis=1)
+    x_test = np.concatenate((prv_stg_test, rf_oof_test, cb_oof_test), axis=1)
 
     return {"train": x_train, "train_targets": y_train, "test": x_test, "test_targets": y_test}
 
